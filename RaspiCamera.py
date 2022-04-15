@@ -5,7 +5,7 @@ import subprocess
 import datetime
 import numpy as np
 
-class runRaspiStillCamera:
+class RaspiCamera:
     def __init__(self, CameraNum=1, MakeTimelapsCaptrueDir='Yes', CaptureStoreDir=None, CaptureMainDirName=None):
         self.CamNum=CameraNum
         self.makeCaptureDir=MakeTimelapsCaptrueDir
@@ -140,7 +140,7 @@ class runRaspiStillCamera:
 
         return CmdLine
     
-    def runCameraRaspi(self, CmdLine):
+    def runRaspiCam(self, CmdLine):
         runCam=subprocess.Popen(CmdLine, shell=True, stderr=subprocess.PIPE, 
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE,  
                          universal_newlines=False)
