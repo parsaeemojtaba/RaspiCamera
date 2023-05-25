@@ -1,140 +1,154 @@
 # This script enables capturing single or multiple bracketed images via Raspberry Pi camera modules using Raspistill functions.
-
 import os
 import subprocess
 import datetime
 import numpy as np
 
 class RaspiCamera:
-    def __init__(self, MakeTimelapsCaptrueDir=True, CaptureStoreDir=None, CaptureMainDirName=None):
+    def __init__(self, make_timelapse_capture_dir=True, capture_store_dir=None, capture_main_dir_name=None):
+        self.make_capture_dir = make_timelapse_capture_dir
         
-        self.makeCaptureDir=MakeTimelapsCaptrueDir
-        if MakeTimelapsCaptrueDir==True:
+        if self.make_capture_dir:
+            # Generate a sub-folder name based on the current date and time
             date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-            print('New images are captering at time (sub-folder name) >>> ',date)
+            print('New images are capturing at time (sub-folder name) >>> ', date)
 
-            currentPath=os.getcwd() if CaptureStoreDir==None else CaptureStoreDir
+            # Set the directory where captures will be stored
+            current_path = os.getcwd() if capture_store_dir is None else capture_store_dir
+            captures_main_dir = 'CameraCaptures' if capture_main_dir_name is None else capture_main_dir_name
+            captures_main_dir_path = os.path.join(current_path, captures_main_dir)
 
-            CapturesMainDir='CameraCaptures' if CaptureMainDirName==None else CaptureMainDirName
-            CapturesMainDirPath=os.path.join(currentPath,CapturesMainDir)
-            print(CapturesMainDirPath)
-            if not os.path.exists(CapturesMainDirPath):
-                os.mkdir(CapturesMainDirPath)
-            if os.path.exists(CapturesMainDirPath):
-                CmdLine='sudo chmod a+w '+CapturesMainDirPath
-                runChmod=subprocess.Popen(CmdLine, shell=True, stderr=subprocess.PIPE, 
-                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,  
-                                    universal_newlines=False)
-                runChmod.stdout.read()
+            # Create the main directory if it doesn't exist
+            if not os.path.exists(captures_main_dir_path):
+                os.mkdir(captures_main_dir_path)
 
-            NewCaptureFolderPath=os.path.join(CapturesMainDirPath,str(date))
-            os.mkdir(NewCaptureFolderPath)
-            CmdLine='sudo chmod a+w '+NewCaptureFolderPath
-            runChmod=subprocess.Popen(CmdLine, shell=True, stderr=subprocess.PIPE, 
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,  
-                                universal_newlines=False)
-            runChmod.stdout.read()
+            # Set read and write permissions for the main directory
+            cmd_line = 'sudo chmod a+w ' + captures_main_dir_path
+            run_chmod = subprocess.Popen(cmd_line, shell=True, stderr=subprocess.PIPE,
+                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                         universal_newlines=False)
+            run_chmod.stdout.read()
 
-            self.capturesMainDirPath=CapturesMainDirPath
-            self.newCaptureFolderPath=NewCaptureFolderPath
+            # Create a new sub-folder for the current capture session
+            new_capture_folder_path = os.path.join(captures_main_dir_path, str(date))
+            os.mkdir(new_capture_folder_path)
 
-        elif not MakeTimelapsCaptrueDir==True:
-            print('Captuered image(s) will store in the current directory!')
-        
+            # Set read and write permissions for the new sub-folder
+            cmd_line = 'sudo chmod a+w ' + new_capture_folder_path
+            run_chmod = subprocess.Popen(cmd_line, shell=True, stderr=subprocess.PIPE,
+                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                         universal_newlines=False)
+            run_chmod.stdout.read()
+
+            self.captures_main_dir_path = captures_main_dir_path
+            self.new_capture_folder_path = new_capture_folder_path
+
+        elif not self.make_capture_dir:
+            print('Captured image(s) will be stored in the current directory!')
+
         else:
-            print('error in making a directory to store captured image(s)!')
+            print('Error in making a directory to store captured image(s)!')
                 
+    def capture_single_picture(self, img_width, img_height, img_file_name, img_file_ext,
+                              iso, shutter_speed, white_balance, rgain, bgain,
+                              cam_num=0, frame_mode=0, framerate=15, ex_mode='antishake',  
+                              img_brightness=50, img_contrast=0, img_saturation=0, img_sharpness=0,
+                              jpeg_quality=100):
         
-    def CaptureSinglePicture(self,Imgwidth, Imgheight, ImgFileName, ImgFileExt,
-                                     ISO, ShutterSpeed, WhiteBalance, Rgain, Bgain,
-                                     camNum=0, FrameMode=0, framerate=15, ExMode='antishake',  
-                                     ImgBirghtness=50, ImgContrast=0, ImgSaturation=0, ImgSharpness=0,
-                                     JpegQulity=100 ):
-
-        imageFilePath=str(ImgFileName)+str(ImgFileExt)
-        if self.makeCaptureDir==True:
-            ImageFile=str(ImgFileName)+str(ImgFileExt)
-            imageFilePath=os.path.join(self.newCaptureFolderPath,str(ImageFile))
-        print(imageFilePath)
-        print('capturing image, please wiat...')         
-        CmdLine=self.CapturePicture(camNum, Imgwidth, Imgheight, imageFilePath,
-                                     ISO, ShutterSpeed, WhiteBalance, Rgain, Bgain,
-                                     FrameMode, framerate, ExMode,  
-                                     ImgBirghtness, ImgContrast, ImgSaturation, ImgSharpness,
-                                     JpegQulity)
+        image_file_path = str(img_file_name) + str(img_file_ext)
+        
+        if self.make_capture_dir:
+            image_file = str(img_file_name) + str(img_file_ext)
+            image_file_path = os.path.join(self.new_capture_folder_path, str(image_file))
+        
+        print(image_file_path)
+        print('Capturing image, please wait...')   
+        
+        cmd_line = self.capture_picture(cam_num, img_width, img_height, image_file_path,
+                                        iso, shutter_speed, white_balance, rgain, bgain,
+                                        frame_mode, framerate, ex_mode,  
+                                        img_brightness, img_contrast, img_saturation, img_sharpness,
+                                        jpeg_quality)
+        
         try:
-            print(CmdLine)
-            runCam=self.runRaspiCam(CmdLine)
-            output_runCam = runCam.communicate()
+            print(cmd_line)
+            run_cam = self.run_raspi_cam(cmd_line)
+            output_run_cam = run_cam.communicate()
         except:
-            print('error in capturing a single image!')
+            print('Error in capturing a single image!')
             pass
-        return (imageFilePath, output_runCam)
+        
+        return (image_file_path, output_run_cam)
 
-    def CaptureMultiplePicture(self,Imgwidth, Imgheight, ImgFileName, ImgFileExt,
-                                     ISO, ShutterSpeedArray, WhiteBalance, Rgain, Bgain,
-                                     camNum=0, FrameMode=0, framerate=15, ExMode='antishake', 
-                                     ImgBirghtness=50, ImgContrast=0, ImgSaturation=0, ImgSharpness=0,
-                                     JpegQulity=100 ):
-        imageFilePathList=[]
-        output_runCamList=[]
-        for i in range (0, len(ShutterSpeedArray)):
-            ShutterSpeed=ShutterSpeedArray[i]
-            ImgFileNameX=ImgFileName+'_'+str(i+1)
-            print('capturing image >>>>  ',str(i+1))   
+    def capture_multiple_pictures(self, img_width, img_height, img_file_name, img_file_ext,
+                                  iso, shutter_speed_array, white_balance, rgain, bgain,
+                                  cam_num=0, frame_mode=0, framerate=15, ex_mode='antishake', 
+                                  img_brightness=50, img_contrast=0, img_saturation=0, img_sharpness=0,
+                                  jpeg_quality=100):
+        
+        image_file_path_list = []
+        output_run_cam_list = []
+        
+        for i in range(len(shutter_speed_array)):
+            shutter_speed = shutter_speed_array[i]
+            img_file_name_x = img_file_name + '_' + str(i+1)
+            print('Capturing image >>> ', str(i+1))   
 
-            imageFilePath=str(ImgFileNameX)+str(ImgFileExt)
-            if self.makeCaptureDir==True:
-                ImageFile=str(ImgFileNameX)+str(ImgFileExt)
-                imageFilePath=os.path.join(self.newCaptureFolderPath,str(ImageFile))
-            print(imageFilePath)
-            CmdLine=self.CapturePicture(camNum,Imgwidth, Imgheight, imageFilePath,
-                                            ISO, ShutterSpeed, WhiteBalance, Rgain, Bgain,
-                                            FrameMode, framerate, ExMode,  
-                                            ImgBirghtness, ImgContrast, ImgSaturation, ImgSharpness,
-                                            JpegQulity)
+            image_file_path = str(img_file_name_x) + str(img_file_ext)
+            
+            if self.make_capture_dir:
+                image_file = str(img_file_name_x) + str(img_file_ext)
+                image_file_path = os.path.join(self.new_capture_folder_path, str(image_file))
+            
+            print(image_file_path)
+            
+            cmd_line = self.capture_picture(cam_num, img_width, img_height, image_file_path,
+                                            iso, shutter_speed, white_balance, rgain, bgain,
+                                            frame_mode, framerate, ex_mode,  
+                                            img_brightness, img_contrast, img_saturation, img_sharpness,
+                                            jpeg_quality)
+            
             try:
-                runCam=self.runRaspiCam(CmdLine)
-                output_runCam = runCam.communicate()
+                run_cam = self.run_raspi_cam(cmd_line)
+                output_run_cam = run_cam.communicate()
 
-                imageFilePathList.append(imageFilePath)
-                output_runCamList.append(output_runCam)
+                image_file_path_list.append(image_file_path)
+                output_run_cam_list.append(output_run_cam)
             except:
-                print('error in capturing multiple images, non stereo mode!')
-                imageFilePathList.append(np.nan)
-                output_runCamList.append(np.nan)
+                print('Error in capturing multiple images, non-stereo mode!')
+                image_file_path_list.append(np.nan)
+                output_run_cam_list.append(np.nan)
                 pass
             
-        return (imageFilePathList, output_runCamList)
+        return (image_file_path_list, output_run_cam_list)
 
-    def CapturePicture(self, camNum, Imgwidth, Imgheight, imageFilePath,
-                                     ISO, ShutterSpeed, WhiteBalance, Rgain, Bgain,
-                                     FrameMode, framerate, ExMode,  
-                                     ImgBirghtness, ImgContrast, ImgSaturation, ImgSharpness,
-                                     JpegQulity):
+    def capture_picture(self, cam_num, img_width, img_height, image_file_path,
+                        iso, shutter_speed, white_balance, rgain, bgain,
+                        frame_mode, framerate, ex_mode,  
+                        img_brightness, img_contrast, img_saturation, img_sharpness,
+                        jpeg_quality):
         
-        CmdLine='sudo raspistill -cs '+str(camNum)+ \
-                    ' -w '+str(Imgwidth)+ \
-                    ' -h '+str(Imgheight)+ \
-                    ' -md '+str(FrameMode)+ \
-                    ' -ISO '+str(ISO)+ \
-                    ' -ss '+str(ShutterSpeed)+ \
-                    ' -ex '+str(ExMode)+\
-                    ' -awb '+str(WhiteBalance)+\
-                    ' -awbg '+str(Rgain)+','+str(Bgain)+\
-                    ' -br '+str(ImgBirghtness)+\
-                    ' -co '+str(ImgContrast)+\
-                    ' -sa '+str(ImgSaturation)+\
-                    ' -sh '+str(ImgSharpness)+\
-                    ' -q '+str(JpegQulity)+\
-                    ' -o '+str(imageFilePath)+\
-                    ' --nopreview'
+        cmd_line = 'sudo raspistill -cs ' + str(cam_num) + \
+                   ' -w ' + str(img_width) + \
+                   ' -h ' + str(img_height) + \
+                   ' -md ' + str(frame_mode) + \
+                   ' -ISO ' + str(iso) + \
+                   ' -ss ' + str(shutter_speed) + \
+                   ' -ex ' + str(ex_mode) + \
+                   ' -awb ' + str(white_balance) + \
+                   ' -awbg ' + str(rgain) + ',' + str(bgain) + \
+                   ' -br ' + str(img_brightness) + \
+                   ' -co ' + str(img_contrast) + \
+                   ' -sa ' + str(img_saturation) + \
+                   ' -sh ' + str(img_sharpness) + \
+                   ' -q ' + str(jpeg_quality) + \
+                   ' -o ' + str(image_file_path) + \
+                   ' --nopreview'
 
-        return CmdLine
+        return cmd_line
     
-    def runRaspiCam(self, CmdLine):
-        runCam=subprocess.Popen(CmdLine, shell=True, stderr=subprocess.PIPE, 
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,  
-                         universal_newlines=False)
-        return runCam
-    
+    def run_raspi_cam(self, cmd_line):
+        run_cam = subprocess.Popen(cmd_line, shell=True, stderr=subprocess.PIPE, 
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,  
+                                   universal_newlines=False)
+        return run_cam
