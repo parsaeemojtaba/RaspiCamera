@@ -4,10 +4,14 @@ import numpy as np
 import RaspiCamera as RaspiCamera
 
 RaspiCam = RaspiCamera.RaspiCamera()
-ShutterSpeed=6400
-runStereo=RaspiCam.CaptureSinglePicture(3125, 2500, 'ImgSingle', '.jpg', 100, ShutterSpeed, 'off', 2.88671875, 1.8359375)
+shutterSpeed=6400
+capture_picture=RaspiCam.capture_single_picture(3125, 2500, 'ImgSingle', '.jpg', 100, shutterSpeed, 'off', 2.88671875, 1.8359375)
 
 CaptureMainDirName='Camera_Captures'
-RaspiCam = RaspiCamera.RaspiCamera(MakeTimelapsCaptrueDir=True, CaptureMainDirName=CaptureMainDirName)
-ShutterSpeedArray=np.array([4800, 6400, 10000])
-runStereo=RaspiCam.CaptureMultiplePicture(3125, 2500, 'ImgBracketed', '.jpg', 100, ShutterSpeedArray, 'off', 2.88671875, 1.8359375)
+camRaspi = RaspiCamera(make_timelapse_capture_dir=True,
+                       capture_store_dir=captureStoreDir,
+                       capture_main_dir_name=captureMainDirName)
+shutterSpeedArray=np.array([4800, 6400, 10000])
+capture_pictures = camRaspi.capture_multiple_pictures(3125, 2500, 'ImgCam_A', '.jpg', 100,
+                                                shutterSpeedArray,
+                                                'off', 2.88671875, 1.8359375)
